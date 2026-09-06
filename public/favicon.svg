@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="110" fill="#15130F"/>
+  <g stroke="#B8863B" stroke-width="45" opacity="0.15">
+    <line x1="-200" y1="-200" x2="700" y2="700" />
+    <line x1="50" y1="-300" x2="950" y2="600" />
+    <line x1="-450" y1="100" x2="450" y2="1000" />
+  </g>
+  <rect width="480" height="480" x="16" y="16" rx="96" fill="none" stroke="#33302A" stroke-width="8"/>
+  <text x="50%" y="54%" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="280" fill="#F1EAD9" dominant-baseline="middle" text-anchor="middle">
+    H
+  </text>
+</svg>
