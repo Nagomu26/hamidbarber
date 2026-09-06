@@ -141,6 +141,7 @@ export function Booking({ onOpenLegal }: { onOpenLegal: (docId: LegalDocId) => v
 
   async function enviarReserva(e: FormEvent<HTMLFormElement>) {
     e.preventDefault(); // Evita el envío tradicional del formulario
+    if (!puedeEnviar || enviando) return;
     if (!fecha || !hora || !servicio) return;
 
     const payload = construirPayload(fecha, hora, servicio, nombre, telefono);
@@ -150,8 +151,25 @@ export function Booking({ onOpenLegal }: { onOpenLegal: (docId: LegalDocId) => v
     try {
       // Se guarda en el mismo Google Sheet donde la barbería apunta a mano las
       // citas de teléfono, así ambas fuentes cuadran.
-      const guardadoOk = await guardarReservaEnSheet(payload);
-      if (!guardadoOk) throw new Error("El Google Sheet no confirmó el guardado");
+      const resultado = await guardarReservaEnSheet(payload);
+      if (!resultado.ok) {
+        if (resultado.motivo === "ocupado") {
+          // Otro cliente se adelantó: marcar la hora como ocupada y avisar.
+          marcarHoraOcupadaLocal(fecha, hora);
+          setMensaje({
+            tipo: "error",
+            texto: "Lo sentimos, esa hora se acaba de reservar. Elige otra hora, por favor.",
+          });
+        } else {
+          throw new Error("El Google Sheet no confirmó el guardado");
+        }
+        return;
+      }
+
+      // Éxito: esta hora queda ocupada ya (evita reservar dos veces seguido
+      // desde la misma página) y refrescamos los datos de Google Sheets.
+      marcarHoraOcupadaLocal(fecha, hora);
+      void precargarOcupadas().then(setOcupadasPorDia);
 
       setMensaje({
         tipo: "ok",
@@ -172,6 +190,16 @@ export function Booking({ onOpenLegal }: { onOpenLegal: (docId: LegalDocId) => v
     } finally {
       setEnviando(false);
     }
+  }
+
+  function marcarHoraOcupadaLocal(dia: Date, franja: string) {
+    const iso = fechaISO(dia);
+    setOcupadasPorDia((prev) => {
+      const base = prev ?? {};
+      const previas = base[iso] ?? [];
+      if (previas.includes(franja)) return base;
+      return { ...base, [iso]: [...previas, franja] };
+    });
   }
 
   return (

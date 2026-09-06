@@ -76,16 +76,38 @@ export function generarHoras(fecha: Date): string[] {
 // para poder ver y probar el diseño.
 // --------------------------------------------------------------------------
 
+// El Apps Script devuelve las horas ocupadas como objetos Date que se
+// serializan como "Sat Dec 30 1899 10:00:00 GMT-0014 ..." (hora 10:00).
+// Aquí se normaliza todo a "HH:MM" y se eliminan duplicados, para poder
+// compararlo limpiamente con las franjas de la rejilla.
+function normalizarListaHoras(valores: unknown): string[] {
+  if (!Array.isArray(valores)) return [];
+  const horas = new Set<string>();
+  for (const valor of valores) {
+    const partes = String(valor).match(/(\d{1,2}):(\d{2})/);
+    if (partes) {
+      horas.add(`${partes[1].padStart(2, "0")}:${partes[2]}`);
+    }
+  }
+  return [...horas];
+}
+
+function normalizarOcupadas(datos: unknown): OcupadasPorDia | null {
+  if (!datos || typeof datos !== "object") return null;
+  const resultado: OcupadasPorDia = {};
+  for (const [dia, lista] of Object.entries(datos as Record<string, unknown>)) {
+    resultado[dia] = normalizarListaHoras(lista);
+  }
+  return resultado;
+}
+
 // Una única llamada al montar la página: trae todas las horas ocupadas de los
 // próximos DIAS_ANTELACION días. Así cambiar de día es instantáneo.
 export async function precargarOcupadas(): Promise<OcupadasPorDia | null> {
   try {
     const respuesta = await fetch(`${APPS_SCRIPT_URL}?rango=${DIAS_ANTELACION}`);
     const datos = (await respuesta.json()) as unknown;
-    if (datos && typeof datos === "object") {
-      return datos as OcupadasPorDia;
-    }
-    return null;
+    return normalizarOcupadas(datos);
   } catch (error) {
     console.error("No se pudo consultar la disponibilidad real del Google Sheet:", error);
     return null;
@@ -116,21 +138,31 @@ export function estaOcupadaDemo(fechaISOTexto: string, hora: string): boolean {
   return hash % 3 === 0; // ~1 de cada 3 horas aparece ocupada, solo para el efecto visual
 }
 
+// Resultado del intento de guardado. El Apps Script puede rechazar el envío
+// con motivo "ocupado" si ya existe esa fecha+hora en la hoja (protección
+// frente a dobles reservas de dos clientes a la vez).
+export type ResultadoGuardado =
+  | { ok: true }
+  | { ok: false; motivo: "ocupado" | "error" };
+
 // Envía la reserva al Google Sheet a través del Apps Script.
 // Se envía SIN cabecera "Content-Type: application/json" a propósito: así el
 // navegador la trata como una petición "simple" y evita el aviso de CORS que
 // Apps Script no gestiona bien con peticiones "preflight".
-export async function guardarReservaEnSheet(payload: BookingPayload): Promise<boolean> {
+export async function guardarReservaEnSheet(payload: BookingPayload): Promise<ResultadoGuardado> {
   try {
     const respuesta = await fetch(APPS_SCRIPT_URL, {
       method: "POST",
       body: JSON.stringify(payload),
     });
-    const resultado = (await respuesta.json()) as { ok?: boolean };
-    return resultado.ok === true;
+    const resultado = (await respuesta.json()) as { ok?: boolean; motivo?: string };
+    if (resultado.ok === true) {
+      return { ok: true };
+    }
+    return { ok: false, motivo: resultado.motivo === "ocupado" ? "ocupado" : "error" };
   } catch (error) {
     console.error("Error al guardar la reserva en el Google Sheet:", error);
-    return false;
+    return { ok: false, motivo: "error" };
   }
 }
 
