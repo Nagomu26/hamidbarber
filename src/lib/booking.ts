@@ -14,7 +14,7 @@ export const DURACION_SLOT_MIN = 40; // Minutos entre cada hora disponible
 
 // URL del Google Apps Script (webhook de Google Sheets / n8n)
 export const APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbzDh8ZA4lfY4Zj_VdwqzmNkVNFlB8qDTYQHfFV-rg0aJKQNoAC4H2dv7hO_eHzzjjMPWA/exec";
+  "https://script.google.com/macros/s/AKfycbxfzoMQPsU2jFEMCdk8BJsQNPN6AiQZnKiX5i_xDA3dtS79FOyqcSiTazp0ZkeL8kGlPg/exec";
 
 export const NOMBRES_DIA = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 export const NOMBRES_MES = [
