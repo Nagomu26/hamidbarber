@@ -24,8 +24,11 @@ export interface LegalDocument {
 
 const IDENTIDAD: string[] = [
   `${CONFIG.nombre}, con domicilio en ${CONFIG.direccion}, ${CONFIG.localidad}.`,
+  CONFIG.nif ? `NIF/CIF: ${CONFIG.nif}.` : null,
   `Teléfono / WhatsApp: ${CONFIG.telefono}.`,
-];
+  CONFIG.email ? `Correo electrónico de contacto: ${CONFIG.email}.` : null,
+  CONFIG.dominio ? `Web: ${CONFIG.dominio}.` : null,
+].filter((x): x is string => x !== null);
 
 export const DOCUMENTOS: Record<LegalDocId, LegalDocument> = {
   aviso: {

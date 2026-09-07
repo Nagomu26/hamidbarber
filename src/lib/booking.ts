@@ -182,5 +182,6 @@ export function construirPayload(
     hora,
     origen: `Web ${CONFIG.nombre}`,
     fechaEnvio: new Date().toISOString(),
+    token: CONFIG.webhookToken,
   };
 }

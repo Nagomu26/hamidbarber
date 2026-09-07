@@ -17,6 +17,14 @@ export const CONFIG = {
   zona: "VALMOJADO · TOLEDO",
   tituloSeo: "Barbería en Valmojado",
   lemaSeo: "Cortes clásicos, degradados, arreglo de barba.",
+  // --- Ficha legal / contacto (RGPD · LSSI). Rellena para un cliente nuevo ---
+  email: "", // Correo de contacto, p. ej. "info@hamidbarber.es"
+  nif: "12345678X", // NIF/CIF del titular real del negocio
+  // URL pública exacta donde estará publicada la web (para Open Graph y aviso legal)
+  dominio: "https://nagomu26.github.io/hamidbarber",
+  // Clave anti-spam compartida con el Google Apps Script (doPost la comprueba).
+  // Cámbiala tú y usa la MISMA en el Apps Script cuando montes un cliente nuevo.
+  webhookToken: "hbbk-vendedor26",
 } as const;
 
 export type Config = typeof CONFIG;

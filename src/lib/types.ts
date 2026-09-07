@@ -19,6 +19,7 @@ export interface BookingPayload {
   hora: string;
   origen: string;
   fechaEnvio: string;
+  token?: string;
 }
 
 export interface BookingState {

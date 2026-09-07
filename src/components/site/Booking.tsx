@@ -141,6 +141,9 @@ export function Booking({ onOpenLegal }: { onOpenLegal: (docId: LegalDocId) => v
 
   async function enviarReserva(e: FormEvent<HTMLFormElement>) {
     e.preventDefault(); // Evita el envío tradicional del formulario
+    // Honeypot: si un bot ha rellenado el campo oculto "website", descartamos
+    // el envío silenciosamente sin tocar Google Sheets.
+    if (String(new FormData(e.currentTarget).get("website") ?? "").length > 0) return;
     if (!puedeEnviar || enviando) return;
     if (!fecha || !hora || !servicio) return;
 
@@ -222,6 +225,15 @@ export function Booking({ onOpenLegal }: { onOpenLegal: (docId: LegalDocId) => v
         </Reveal>
 
         <form onSubmit={enviarReserva} className="space-y-10" noValidate>
+          {/* Campo truco anti-bots: invisibile para humanos */}
+          <input
+            type="text"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className="hidden"
+          />
           <Reveal>
             <Paso numero={1} titulo="ELIGE EL DÍA">
               <div
