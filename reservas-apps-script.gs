@@ -20,6 +20,10 @@ const DURACION_SLOT_MIN = 40;
 // El MISMO valor que pongas en `webhookToken` dentro de src/lib/config.ts
 const WEBHOOK_TOKEN = 'hbbk-vendedor26';
 
+// Correo al que llegan las notificaciones de cada cita. Es EL correo que se le
+// da a la barbería para gestionar las citas. Cambiar por cliente.
+const CORREO_NOTIFICACIONES = 'nagokeys1328@gmail.com';
+
 const IDX = {
   RESERVADO: CABECERAS.indexOf('Reservado'),
   HORA: CABECERAS.indexOf('Hora'),
@@ -185,7 +189,7 @@ function notificarPorEmail(datos) {
     datos = { nombre: 'PRUEBA', telefono: '600000000', servicio: 'Test', fecha: '2026-09-06', hora: '10:00' };
   }
   try {
-    var correoDestino = "nagokeys1328@gmail.com";
+    var correoDestino = CORREO_NOTIFICACIONES;
     var asunto = "✂️ NUEVA CITA: " + datos.nombre + " - " + datos.hora;
     var mensaje = "Se ha recibido una nueva reserva desde la web:\n\n" +
                   "Cliente: " + datos.nombre + "\n" +
