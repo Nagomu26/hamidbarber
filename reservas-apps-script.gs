@@ -100,6 +100,17 @@ function slotYaPasado(fecha, hora) {
   return String(fecha).trim() === fechaHoyLocal() && normalizarHora(hora) <= horaActualLocal();
 }
 
+// Devuelve true si la hora pertenece a una franja de apertura válida del día.
+function esFranjaValida(fecha, hora) {
+  var d = parsearFecha(String(fecha).trim());
+  var franjas = obtenerFranjas(d);
+  var hb = normalizarHora(hora);
+  for (var i = 0; i < franjas.length; i++) {
+    if (hb >= franjas[i][0] && hb < franjas[i][1]) return true;
+  }
+  return false;
+}
+
 function parsearFecha(fechaStr) {
   var partes = String(fechaStr).trim().split('-');
   if (partes.length === 3) {
@@ -244,6 +255,11 @@ function doPost(e) {
 
     var fechaBuscar = String(datos.fecha).trim();
     var horaBuscar = normalizarHora(datos.hora);
+
+    // Rechaza reservas en horas que no son de apertura de ese día.
+    if (!esFranjaValida(fechaBuscar, horaBuscar)) {
+      return respuestaJSON({ ok: false, motivo: 'error', error: 'Esa hora no está disponible' });
+    }
 
     // Rechaza reservas de horas de HOY que ya han empezado.
     if (slotYaPasado(fechaBuscar, horaBuscar)) {
