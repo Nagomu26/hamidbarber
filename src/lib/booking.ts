@@ -138,12 +138,23 @@ export function estaOcupadaDemo(fechaISOTexto: string, hora: string): boolean {
   return hash % 3 === 0; // ~1 de cada 3 horas aparece ocupada, solo para el efecto visual
 }
 
+// Devuelve true si la franja, siendo de hoy, ya ha empezado (no se puede
+// reservar). Para cualquier otro día devuelve false.
+export function esHoraYaPasada(fecha: Date, hora: string, ahora: Date = new Date()): boolean {
+  if (fechaISO(fecha) !== fechaISO(ahora)) return false;
+  const [hh, mm] = hora.split(":").map(Number);
+  const slot = hh * 60 + mm;
+  const instante = ahora.getHours() * 60 + ahora.getMinutes();
+  return instante >= slot;
+}
+
 // Resultado del intento de guardado. El Apps Script puede rechazar el envío
 // con motivo "ocupado" si ya existe esa fecha+hora en la hoja (protección
-// frente a dobles reservas de dos clientes a la vez).
+// frente a dobles reservas de dos clientes a la vez), o "pasado" si la hora
+// de hoy ya ha empezado.
 export type ResultadoGuardado =
   | { ok: true }
-  | { ok: false; motivo: "ocupado" | "error" };
+  | { ok: false; motivo: "ocupado" | "pasado" | "error" };
 
 // Envía la reserva al Google Sheet a través del Apps Script.
 // Se envía SIN cabecera "Content-Type: application/json" a propósito: así el
@@ -159,7 +170,10 @@ export async function guardarReservaEnSheet(payload: BookingPayload): Promise<Re
     if (resultado.ok === true) {
       return { ok: true };
     }
-    return { ok: false, motivo: resultado.motivo === "ocupado" ? "ocupado" : "error" };
+    return {
+      ok: false,
+      motivo: resultado.motivo === "ocupado" ? "ocupado" : resultado.motivo === "pasado" ? "pasado" : "error",
+    };
   } catch (error) {
     console.error("Error al guardar la reserva en el Google Sheet:", error);
     return { ok: false, motivo: "error" };

@@ -6,6 +6,7 @@ import {
   NOMBRES_DIA,
   NOMBRES_MES,
   construirPayload,
+  esHoraYaPasada,
   estaOcupadaDemo,
   fechaISO,
   generarHoras,
@@ -56,14 +57,15 @@ function Resumen({
 }) {
   if (fecha && hora && servicioNombre) {
     const esHoy = fechaISO(fecha) === hoyISO;
-    const nombreDia = esHoy ? "hoy" : NOMBRES_DIA[fecha.getDay()];
+    const nombreDia = NOMBRES_DIA[fecha.getDay()];
     const fechaTexto = esHoy
       ? `hoy (${fecha.getDate()} de ${NOMBRES_MES[fecha.getMonth()]})`
       : `${nombreDia} ${fecha.getDate()} de ${NOMBRES_MES[fecha.getMonth()]}`;
 
     return (
       <p className="text-sm text-bonemuted">
-        Vas a reservar <span className="font-medium text-bone">{servicioNombre}</span> el{" "}
+        Vas a reservar <span className="font-medium text-bone">{servicioNombre}</span>{" "}
+        {esHoy ? "para" : "el"}{" "}
         <span className="font-medium text-bone">{fechaTexto}</span> a las{" "}
         <span className="font-medium text-bone">{hora}</span>.
       </p>
@@ -109,8 +111,10 @@ export function Booking({ onOpenLegal }: { onOpenLegal: (docId: LegalDocId) => v
   const horas = fecha ? generarHoras(fecha) : [];
   const horasOcupadas = fecha ? obtenerHorasOcupadas(ocupadasPorDia, fechaISO(fecha)) : null;
 
+  const esHoy = fecha !== null && fechaISO(fecha) === fechaISO(hoy);
   const esOcupada = (franja: string) =>
-    horasOcupadas ? horasOcupadas.includes(franja) : fecha ? estaOcupadaDemo(fechaISO(fecha), franja) : false;
+    esHoraYaPasada(fecha ?? hoy, franja) ||
+    (horasOcupadas ? horasOcupadas.includes(franja) : fecha ? estaOcupadaDemo(fechaISO(fecha), franja) : false);
 
   const puedeEnviar =
     !!fecha &&
@@ -122,8 +126,8 @@ export function Booking({ onOpenLegal }: { onOpenLegal: (docId: LegalDocId) => v
 
   const slotHelp = !fecha
     ? "Selecciona primero un día para ver las horas disponibles."
-    : fechaISO(fecha) === fechaISO(hoy)
-      ? "Horas para hoy. Las horas tachadas ya están reservadas."
+    : esHoy
+      ? "Horas para hoy. Las horas ya pasadas o reservadas no se pueden elegir."
       : `Horas para el ${fecha.getDate()} de ${NOMBRES_MES[fecha.getMonth()]}. Las horas tachadas ya están reservadas.`;
 
   function seleccionarDia(dia: Date) {
@@ -162,6 +166,13 @@ export function Booking({ onOpenLegal }: { onOpenLegal: (docId: LegalDocId) => v
           setMensaje({
             tipo: "error",
             texto: "Lo sentimos, esa hora se acaba de reservar. Elige otra hora, por favor.",
+          });
+        } else if (resultado.motivo === "pasado") {
+          // La hora de hoy ya ha empezado: no se puede confirmar.
+          marcarHoraOcupadaLocal(fecha, hora);
+          setMensaje({
+            tipo: "error",
+            texto: "Esa hora ya ha pasado. Elige otra hora, por favor.",
           });
         } else {
           throw new Error("El Google Sheet no confirmó el guardado");

@@ -78,6 +78,28 @@ function normalizarHora(valor) {
   return texto;
 }
 
+// Hora actual local "HH:MM" (huso horario de la hoja).
+function horaActualLocal() {
+  var d = new Date();
+  var hh = d.getHours();
+  var mm = d.getMinutes();
+  return (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
+}
+
+// Fecha actual local "AAAA-MM-DD" (huso horario de la hoja).
+function fechaHoyLocal() {
+  var d = new Date();
+  var m = d.getMonth() + 1;
+  var dd = d.getDate();
+  return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (dd < 10 ? '0' : '') + dd;
+}
+
+// Devuelve true si el slot (fecha + hora) ya ha empezado: es de hoy y su hora
+// es menor o igual a la hora actual.
+function slotYaPasado(fecha, hora) {
+  return String(fecha).trim() === fechaHoyLocal() && normalizarHora(hora) <= horaActualLocal();
+}
+
 function parsearFecha(fechaStr) {
   var partes = String(fechaStr).trim().split('-');
   if (partes.length === 3) {
@@ -223,6 +245,11 @@ function doPost(e) {
     var fechaBuscar = String(datos.fecha).trim();
     var horaBuscar = normalizarHora(datos.hora);
 
+    // Rechaza reservas de horas de HOY que ya han empezado.
+    if (slotYaPasado(fechaBuscar, horaBuscar)) {
+      return respuestaJSON({ ok: false, motivo: 'pasado', error: 'Esa hora ya ha pasado' });
+    }
+
     for (var i = 1; i < filas.length; i++) {
       var fechaFila = String(filas[i][IDX.FECHA]).trim();
       var horaFila = normalizarHora(filas[i][IDX.HORA]);
@@ -300,6 +327,18 @@ function doGet(e) {
           resultado[fechaFila].push(normalizarHora(filas[i][IDX.HORA]));
         }
       }
+
+      // Las horas de HOY que ya han empezado se consideran ocupadas.
+      if (resultado[fechaHoyLocal()]) {
+        var horasHoy = generarHorasDelDia(new Date());
+        var ahora = horaActualLocal();
+        for (var k = 0; k < horasHoy.length; k++) {
+          if (horasHoy[k] <= ahora && resultado[fechaHoyLocal()].indexOf(horasHoy[k]) === -1) {
+            resultado[fechaHoyLocal()].push(horasHoy[k]);
+          }
+        }
+      }
+
       return respuestaJSON(resultado);
     }
 
