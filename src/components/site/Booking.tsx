@@ -413,7 +413,7 @@ export function Booking({ onOpenLegal }: { onOpenLegal: (docId: LegalDocId) => v
                     autoComplete="tel"
                     value={telefono}
                     onChange={(e) => setTelefono(e.target.value)}
-                    placeholder="623 375 207"
+                    placeholder="600 000 000"
                     className="w-full rounded-md border border-line bg-ink px-4 py-3 text-bone transition-shadow placeholder:text-bonemuted/60 focus:border-brass focus:shadow-brassglow"
                   />
                 </div>

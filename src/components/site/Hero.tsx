@@ -44,7 +44,7 @@ export function Hero() {
 
         <Reveal delay={160}>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-bonemuted sm:text-xl">
-            Barbería de confianza en el corazón de Valmojado. Elige tu hora, entra, siéntate y sal
+            Barbería de confianza en tu barrio. Elige tu hora, entra, siéntate y sal
             como quieres verte.
           </p>
         </Reveal>

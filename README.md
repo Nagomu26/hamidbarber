@@ -1,4 +1,4 @@
-# Web de reservas para barberías (React + Vite + Tailwind)
+# Your Barber — Web de reservas para barberías (React + Vite + Tailwind)
 
 Landing de una página (oscuro y elegante) con reservas online en tiempo real contra
 Google Sheets mediante un Google Apps Script. Lista para personalizar por barbería

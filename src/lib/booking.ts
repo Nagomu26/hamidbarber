@@ -87,6 +87,14 @@ function normalizarListaHoras(valores: unknown): string[] {
     const partes = String(valor).match(/(\d{1,2}):(\d{2})/);
     if (partes) {
       horas.add(`${partes[1].padStart(2, "0")}:${partes[2]}`);
+      continue;
+    }
+    // Defensa: si llega una hora rota tipo "11" (solo hora), se normaliza a
+    // "HH:00" en vez de descartarla. No bloqueará ningún slot real de la
+    // rejilla, pero la cita no desaparece en silencio.
+    const soloHora = String(valor).trim().match(/^(\d{1,2})$/);
+    if (soloHora) {
+      horas.add(`${soloHora[1].padStart(2, "0")}:00`);
     }
   }
   return [...horas];

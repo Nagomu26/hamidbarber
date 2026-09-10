@@ -18,10 +18,11 @@ const DIAS_ANTELACION = 7;
 const DURACION_SLOT_MIN = 40;
 
 // El MISMO valor que pongas en `webhookToken` dentro de src/lib/config.ts
-const WEBHOOK_TOKEN = 'hbbk-vendedor26';
+const WEBHOOK_TOKEN = 'hbbk-r65j9hj3-bwan4kpy';
 
 // Correo al que llegan las notificaciones de cada cita. Es EL correo que se le
 // da a la barbería para gestionar las citas. Cambiar por cliente.
+// >>> TRASPASO: al entregar al comprador, cambia a su dirección de correo.
 const CORREO_NOTIFICACIONES = 'nagokeys1328@gmail.com';
 
 const IDX = {
@@ -100,13 +101,24 @@ function slotYaPasado(fecha, hora) {
   return String(fecha).trim() === fechaHoyLocal() && normalizarHora(hora) <= horaActualLocal();
 }
 
+// true si la hora es un slot exacto de la rejilla de ese día (40 min).
+function esSlotDeRejilla(fecha, hora) {
+  var horas = generarHorasDelDia(fecha);
+  return horas.indexOf(normalizarHora(hora)) !== -1;
+}
+
 // Devuelve true si la hora pertenece a una franja de apertura válida del día.
+// Además exige que la hora esté ALINEADA con la rejilla de slots (p. ej. "11:00"
+// NO es válido; solo 10:00, 10:40, 11:20...). Así se evita que citas escritas
+// a mano o por API creen horas "rotas" que la web no puede mostrar.
 function esFranjaValida(fecha, hora) {
   var d = parsearFecha(String(fecha).trim());
   var franjas = obtenerFranjas(d);
   var hb = normalizarHora(hora);
   for (var i = 0; i < franjas.length; i++) {
-    if (hb >= franjas[i][0] && hb < franjas[i][1]) return true;
+    if (hb >= franjas[i][0] && hb < franjas[i][1]) {
+      return esSlotDeRejilla(d, hb);
+    }
   }
   return false;
 }
@@ -240,6 +252,28 @@ function notificarPorEmail(datos) {
   }
 }
 
+// Borra el contenido de las citas de PRUEBA/TEST para dejar la plantilla limpia.
+// Solo libera las filas (deja cabecera, hora, día y fecha de la plantilla).
+function limpiarFilasPrueba() {
+  var hoja = obtenerHojaReservas();
+  var filas = hoja.getDataRange().getValues();
+  var cambios = 0;
+  for (var i = 1; i < filas.length; i++) {
+    var nombre = String(filas[i][IDX.NOMBRE]).trim();
+    if (nombre.indexOf('PRUEBA') === 0 || nombre.indexOf('TEST') === 0) {
+      hoja.getRange(i + 1, IDX.RESERVADO + 1).setValue(false);
+      hoja.getRange(i + 1, IDX.NOMBRE + 1).setValue('');
+      hoja.getRange(i + 1, IDX.TELEFONO + 1).setValue('');
+      hoja.getRange(i + 1, IDX.SERVICIO + 1).setValue('');
+      hoja.getRange(i + 1, IDX.PRECIO + 1).setValue('');
+      hoja.getRange(i + 1, IDX.ORIGEN + 1).setValue('');
+      hoja.getRange(i + 1, IDX.MARCA + 1).setValue('');
+      cambios++;
+    }
+  }
+  return cambios;
+}
+
 function doPost(e) {
   var lock = LockService.getScriptLock();
   lock.tryLock(10000);
@@ -256,7 +290,8 @@ function doPost(e) {
     var fechaBuscar = String(datos.fecha).trim();
     var horaBuscar = normalizarHora(datos.hora);
 
-    // Rechaza reservas en horas que no son de apertura de ese día.
+    // Rechaza reservas en horas que no son de apertura de ese día o que no
+    // coinciden con la rejilla de slots.
     if (!esFranjaValida(fechaBuscar, horaBuscar)) {
       return respuestaJSON({ ok: false, motivo: 'error', error: 'Esa hora no está disponible' });
     }
@@ -299,8 +334,11 @@ function doPost(e) {
     fila[IDX.MARCA] = new Date();
     hoja.appendRow(fila);
     var ultima = hoja.getLastRow();
-    hoja.getRange(ultima, IDX.HORA + 1, 1, 1).setNumberFormat('@');
-    hoja.getRange(ultima, IDX.FECHA + 1, 1, 1).setNumberFormat('@');
+    // Fuerza formato TEXTO en hora y fecha y VUELVE A ESCRIBIRLOS: si se deja
+    // que Sheets los interprete como hora/fecha, al releer la hoja aparecen
+    // valores rotos ("11" en vez de "11:20") y la web no puede marcar la cita.
+    hoja.getRange(ultima, IDX.HORA + 1, 1, 1).setNumberFormat('@').setValue(horaBuscar);
+    hoja.getRange(ultima, IDX.FECHA + 1, 1, 1).setNumberFormat('@').setValue(fechaBuscar);
     ordenarPorFechaYHora(hoja);
     aplicarColoresPorDia(hoja);
     notificarPorEmail(datos);
@@ -408,6 +446,10 @@ function limpiezaDiaria() {
     } else {
       filasAConservar.push(filas[i]);
     }
+  }
+
+  for (var s = 0; s < filasAConservar.length; s++) {
+    filasAConservar[s] = filasAConservar[s].slice(0, CABECERAS.length);
   }
 
   hoja.clearContents();

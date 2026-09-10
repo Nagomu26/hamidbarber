@@ -85,7 +85,7 @@ export function Footer({ onOpenLegal }: { onOpenLegal: (docId: LegalDocId) => vo
             © {new Date().getFullYear()} {CONFIG.nombre}. Todos los derechos reservados.
           </p>
           <p>
-            {CONFIG.nombre} · {CONFIG.direccion} · {CONFIG.ciudad}, Toledo
+            {CONFIG.nombre} · {CONFIG.direccion} · {CONFIG.ciudad}
           </p>
         </div>
       </div>

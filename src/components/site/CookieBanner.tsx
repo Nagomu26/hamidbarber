@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { LegalDocId } from "@/lib/legal";
 
-const STORAGE_KEY = "hamidbarber-cookies-v1";
+const STORAGE_KEY = "yourbarber-cookies-v1";
 
 interface CookieBannerProps {
   onOpenLegal: (docId: LegalDocId) => void;
